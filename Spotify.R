@@ -16,12 +16,14 @@ summary(spotify);
 spotify$X = NULL;
 spotify$target = NULL;
 
-##  Dupe Check
+##  Dupe Check  ----  I removed "target" first because that was somebody else's response
+##                    (Do they like the song or not) and caused a few dupes with inconsistent response.
+##                    Since I'm just exploring the data and not trying to predict, I don't need it.
 sum(duplicated(spotify)); ## 8 dupes
 spotify = spotify[!duplicated(spotify),];
 
+## Extract Meta Data and Remove from data set
 metaStuff = spotify[,c("song_title","artist")];
-target = spotify$target;
 spotify$song_title = NULL;
 spotify$artist = NULL;
 
@@ -34,11 +36,15 @@ colSums(is.na(spotify));
 boxplot(spotify[,c(1,2,4,5,7,10,13)]); ## All between 0 and 1... This is nasty.
 boxplot(spotify$loudness);
 
-for( ind in c(1,2,4,5,7,10,13) ){
+##  I want to see the histograms and density of each variable.
+for( ind in 1:13 ){
   hist(spotify[[ind]],freq=FALSE,main=names(spotify)[ind]);
   lines(density(spotify[[ind]]),col="blue");
-  readline();
+  readline("Press <enter>:");
 }
+##  Skew: Acousticness, energy, instrumentalness, liveness, loudness, speechiness
+##  Scaling: duration, tempo, loudness
+##  Categorical: key, mode (1-major/0-minor - mostly major), time_sig
 
 ##  This might come in handy.
 boxCox = function(X,lam){
