@@ -8,7 +8,7 @@
 library(corrplot);
 library(GGally);
 
-spotify = read.csv("Spotify.csv");
+spotify = read.csv("data/Spotify.csv");
 dim(spotify);
 ##  Not many columns, so I can do this.
 summary(spotify);
