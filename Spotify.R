@@ -7,6 +7,7 @@
 ###################################################################
 library(corrplot);
 library(ggplot2);
+library(ggbiplot)
 library(GGally);
 
 spotify = read.csv("data/Spotify.csv");
@@ -66,9 +67,9 @@ par(mfrow=c(1,1))
 
 
 ##  Initial correlation check (pre-FE)
-corrplot(cor(spotify), type="lower");
+corrplot(cor(spotify), main="Raw Correlations", type="lower");
 cor(spotify[,c("acousticness","energy","loudness")]);
-ggpairs(spotify[,c("acousticness","energy","loudness")]);
+ggpairs(spotify[,c("acousticness","energy","loudness","danceability","valence")]);
 
 ##  acoustic ~ energy    -> -0.65
 ##  acoustic ~ loudness  -> -0.56
@@ -88,17 +89,26 @@ kmSS = function(k,datFm = spotify){
 }
 
 plot( 1:8, sapply(1:8,kmSS), type="b", main="SSB/SST", xlab="k",ylab="")
-km = kmeans(spotify, 4);
+km = kmeans(spotify, 3);
 distFromCluster = sqrt(rowSums((spotify - km$centers[km$cluster,])^2));
 boxplot(distFromCluster)
 clOutliers = boxplot.stats(distFromCluster)$out;
-length(clOutliers);## 81 cluster outliers. Examined, and not helpful.
+length(clOutliers);## 121 cluster outliers. Examined, and not helpful.
 
 plot(spotify$energy,spotify$loudness);
 with(spotify[distFromCluster %in% clOutliers,],
      points(energy,loudness,pch="+",col="red"))
 ##  ... Nope. Not helpful.
 
+##  Let's check how the clusters look...
+scaledAEL$cluster = as.factor(km$cluster)
+ggpairs(scaledAEL,aes(color=cluster))
+spotifyCL = spotify;
+spotifyCL$cluster = as.factor(km$cluster);
+ggpairs(spotifyCL[,c("acousticness","energy","loudness","danceability","valence","cluster")],
+        aes(color=cluster,alpha=0.5));
+##  Hmm. A lot of the correlation is absorbed by the smallest cluster.
+##  Not surprising, considering how much leverage the tails have on the correlations.
 
 ####
 ##  Some basic feature engineering
@@ -135,5 +145,19 @@ spotifyFE = data.frame( acousticness = scale(boxCox(spotify$acousticness,0.25)),
 corrplot(cor(spotifyFE[,-12]),type="lower");
 ggpairs(spotifyFE);
 ggpairs(spotifyFE[,c("acousticness","danceability","energy","negLogLoudness","valence")]);
+
+km2 = plot(sapply(1:12, kmSS, datFm = spotifyFE[,-12] ),type="b", main="SSb/SSt", ylab="SSb/SSt");
+##  k-Means looks pretty useless here, but I'm curious how the initial clusters mess with the corrs.
+spotifyFE$cluster = as.factor(km$cluster);
+ggpairs(spotifyFE[,c("acousticness","danceability","energy","negLogLoudness","valence","cluster")],
+        aes(color=cluster,alpha=0.75));
+##  Interesting...
+
+##  Maybe a PCA for the heck of it.
+spottyPCA = princomp(spotifyFE[,-12])
+plot(spottyPCA,type="line")
+spottyPCA$loadings
+with(spottyPCA, sum(sdev[1:3]^2)/sum(sdev^2))
+biplot(spottyPCA);
 
 
