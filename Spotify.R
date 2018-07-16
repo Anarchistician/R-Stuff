@@ -127,8 +127,7 @@ for( tL in (0:5) ){
 }
 
 ##  Many of these are already normalized on a scale from 0 to 1, but after the transforms,
-##    I have to restandardize them to get as close as possible to normality assumptions for
-##    correlation analysis.
+##    I have to restandardize them for correlation analysis.
 spotifyFE = data.frame( acousticness = scale(boxCox(spotify$acousticness,0.25)),
                         danceability = scale(spotify$danceability),
                         duration = scale(spotify$duration_ms),
